@@ -1,1 +1,1 @@
-from algorithms.bruteforce import bruteforce
+from codebase.algorithms.bruteforce import bruteforce
