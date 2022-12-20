@@ -36,17 +36,9 @@ def calc_capex(self, basic_economical_settings: BasicEconomicalSettings):
                 """get element input parameters"""
                 element_name = capex_element.get_name()
                 investment_cost = capex_element.get_investment_costs()
-                investment_function = capex_element.get_investment_function()
-                funding = capex_element.get_funding_volume()
                 lifecycle = capex_element.get_life_cycle()
                 price_dev_factor = capex_element.get_price_dev_factor()
                 risk_factor = capex_element.get_risk_surcharge_factor()
-                if capex_element.interest_rate_factor is None:
-                    interest_rate = basic_economical_settings.basic_interest_rate_factor
-                    """-1 because interest_rate_factor is in basic settings, but interest rate has to be given to capex_element"""
-                    capex_element.set_interest_rate(interest_rate - 1)
-                else:
-                    interest_rate = capex_element.interest_rate_factor
 
                 """define timeframes"""
                 reference_year = capex_element.get_reference_year() if capex_element.get_reference_year() is not None \
@@ -69,20 +61,10 @@ def calc_capex(self, basic_economical_settings: BasicEconomicalSettings):
                         total_delay_time) * risk_factor
                     funded_first_investment = (investment_cost - funding) * price_dev_with_inflation ** (
                         total_delay_time) * risk_factor
-                elif investment_function is not None and self.size is not None:
-                    first_investment = float(investment_function(self.size, total_delay_time)) * self.size
-                    funded_first_investment = (first_investment - funding * price_dev_with_inflation ** (
-                        total_delay_time)) * risk_factor
-                else:
-                    first_investment = 0
-                    logging.warning(
-                        f'Could not calculate CAPEX for {self.__class__.__name__, self.technology} of element {element_name}')
 
                 """-------------calculate annuities as described in VDI 2067-----------------"""
                 all_investments_element = []
                 all_investments_not_discounted = []
-                all_investments_not_discounted.append(funded_first_investment)
-                all_investments_element.append(funded_first_investment)
 
                 if lifecycle != 0:
                     """calculate annuity for elements which have a lifecycle e.g. electrolysis stacks"""
@@ -95,12 +77,6 @@ def calc_capex(self, basic_economical_settings: BasicEconomicalSettings):
                             if investment_cost is not None:
                                 replacement_invest = float(
                                     first_investment * price_dev_with_inflation ** (replacement * lifecycle))
-                            elif investment_function is not None and self.size is not None:
-                                replacement_invest = float(investment_function(self.size,
-                                                                               total_delay_time + (
-                                                                                       replacement * lifecycle)) * self.size)
-                            else:
-                                replacement_invest = 0
 
                             replacement_invest_discounted = replacement_invest / (
                                     interest_rate ** (replacement * lifecycle))
@@ -126,9 +102,3 @@ def calc_capex(self, basic_economical_settings: BasicEconomicalSettings):
                 else:
                     """calculation for elements which have no lifecycle e.g. research & development"""
                     capex_annuity_element = first_investment / total_time_period
-
-                """write capex_Data in ExportDataclass"""
-                element_capex = ElementCAPEX(element_name=element_name, all_investments=all_investments_element,
-                                             input_parameters=capex_element,
-                                             annuity=capex_annuity_element, remain_value=remain_value_element)
-                self.economic_results.component_CAPEX.append(element_capex)
