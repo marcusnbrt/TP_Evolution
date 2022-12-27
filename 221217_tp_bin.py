@@ -105,15 +105,15 @@ if __name__ == '__main__':
 
     with timer():
         population, generations = genetic.run_evolution(
-            populate_func=partial(genetic.generate_population, size=10, genome_length=len(assets)*number_years),
+            populate_func=partial(genetic.generate_population, size=20, genome_length=len(assets)*number_years),
             fitness_func=partial(fitness, assets=assets, limit=limit),
             fitness_limit=10e15,
             generation_limit=1000
         )
-        print(population[-1])
+        print(population[0])
 
         print(generations)
-        print(fitness(population[-1],assets,limit))
+        print(fitness(population[0],assets,limit))
 
 
     # gen = genetic.generate_genome(len(assets)*number_years)

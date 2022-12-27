@@ -86,7 +86,7 @@ def run_evolution(
     population = populate_func()
 
     for i in range(generation_limit):
-        population = sorted(population, key=lambda genome: fitness_func(genome), reverse=True)
+        population = sorted(population, key=lambda genome: fitness_func(genome), reverse=False)
 
         if printer is not None:
             printer(population, i, fitness_func)

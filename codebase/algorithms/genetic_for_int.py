@@ -12,7 +12,7 @@ PrinterFunc = Callable[[Population, int, FitnessFunc], None]
 
 
 def generate_genome(length: int, year_start: int, year_end: int) -> Genome:
-    return choices(list(range(year_start, year_end)) +[0], k=length)
+    return choices(list(range(year_start, year_end)), k=length)
 
 
 def generate_population(size: int, genome_length: int, year_start: int, year_end: int) -> Population:
@@ -31,14 +31,11 @@ def single_point_crossover(a: Genome, b: Genome) -> Tuple[Genome, Genome]:
     return a[0:p] + b[p:], b[0:p] + a[p:]
 
 
-def mutation(genome: Genome, start_year: int, end_year: int, num: int = 1, probability: float = 0.5,  manipulation_steps: int = 1) -> Genome:
+def mutation(genome: Genome, start_year: int, end_year: int, num: int = 1, probability: float = 0.5) -> Genome:
     for _ in range(num):
         index = randrange(len(genome))
         if random() > probability:
-            new_val = abs(genome[index]) - manipulation_steps
-            new_val = start_year if new_val < start_year else new_val
-            new_val = end_year if new_val > end_year else new_val
-            genome[index] = new_val
+            genome[index] = randint(start_year,end_year)
 
     return genome
 
@@ -56,7 +53,7 @@ def selection_pair(population: Population, fitness_func: FitnessFunc) -> Populat
 
 
 def sort_population(population: Population, fitness_func: FitnessFunc) -> Population:
-    return sorted(population, key=fitness_func, reverse=True)
+    return sorted(population, key=fitness_func, reverse=False)
 
 
 def genome_to_string(genome: Genome) -> str:
@@ -87,13 +84,14 @@ def run_evolution(
         mutation_func: MutationFunc = mutation,
         start_year: int = 2021,
         end_year: int = 2045,
+        mutation_probability: int = 0.5,
         generation_limit: int = 100,
         printer: Optional[PrinterFunc] = None) \
         -> Tuple[Population, int]:
     population = populate_func()
 
     for i in range(generation_limit):
-        population = sorted(population, key=lambda genome: fitness_func(genome), reverse=True)
+        population = sorted(population, key=lambda genome: fitness_func(genome), reverse=False)
 
         if printer is not None:
             printer(population, i, fitness_func)
@@ -106,8 +104,8 @@ def run_evolution(
         for j in range(int(len(population) / 2) - 1):
             parents = selection_func(population, fitness_func)
             offspring_a, offspring_b = crossover_func(parents[0], parents[1])
-            offspring_a = mutation_func(offspring_a, start_year, end_year)
-            offspring_b = mutation_func(offspring_b, start_year, end_year)
+            offspring_a = mutation_func(offspring_a, start_year, end_year, probability=mutation_probability)
+            offspring_b = mutation_func(offspring_b, start_year, end_year, probability=mutation_probability)
             next_generation += [offspring_a, offspring_b]
 
         population = next_generation
